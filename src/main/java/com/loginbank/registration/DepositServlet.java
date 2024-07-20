@@ -1,18 +1,13 @@
 package com.loginbank.registration;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import com.loginbank.registration.dao.userdao;
 
 @WebServlet(name = "DepositServlet", urlPatterns = {"/DepositServlet"})
 public class DepositServlet extends HttpServlet {
@@ -30,62 +25,24 @@ public class DepositServlet extends HttpServlet {
             return;
         }
 
-        // Connect to database
-        Connection conn = null;
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/gen?socketTimeout=300000", "root", "system");
+        userdao userDAO = new userdao();
+        double currentBalance = userDAO.getInitialBalance2(accountNumber);
 
-            // Retrieve current balance
-            PreparedStatement stmt = conn.prepareStatement("SELECT initialbalance FROM custdetails WHERE accno =?");
-            stmt.setString(1, accountNumber);
-            ResultSet result = stmt.executeQuery();
-            if (result.next()) {
-                double currentBalance = result.getDouble("initialbalance");
-                double depositAmount = Double.parseDouble(amount);
-
-                // Update balance
-                stmt = conn.prepareStatement("UPDATE custdetails SET initialbalance =? WHERE accno =?");
-                stmt.setDouble(1, currentBalance + depositAmount);
-                stmt.setString(2, accountNumber);
-                stmt.executeUpdate();
-
-                // Get updated balance
-                stmt = conn.prepareStatement("SELECT initialbalance FROM custdetails WHERE accno =?");
-                stmt.setString(1, accountNumber);
-                result = stmt.executeQuery();
-                result.next();
-                double updatedBalance = result.getDouble("initialbalance");
-
-                // Insert transaction details into transaction_history table
-                stmt = conn.prepareStatement("INSERT INTO transaction_history (accno, trans_date, trans_type, amount, status) VALUES (?, NOW(), 'Deposit', ?, 'Success')");
-                stmt.setString(1, accountNumber);
-                stmt.setDouble(2, depositAmount);
-                stmt.executeUpdate();
-
+        if (currentBalance > 0) {
+            double depositAmount = Double.parseDouble(amount);
+            if (userDAO.updateBalance(accountNumber, depositAmount) && userDAO.insertTransactionHistory(accountNumber, depositAmount)) {
                 // Set session attribute for updated balance
                 HttpSession session = request.getSession();
-                session.setAttribute("balance", updatedBalance);
-                session.setAttribute("initialbalance", updatedBalance);
+                session.setAttribute("balance", currentBalance + depositAmount);
+                session.setAttribute("initialbalance", currentBalance + depositAmount);
 
                 // Redirect to user dashboard with sweet alert
                 response.sendRedirect("userdashboard.jsp?deposit_success=true");
             } else {
-                response.sendRedirect("deposit.jsp?error=account_not_found");
+                response.sendRedirect("deposit.jsp?error=database_error");
             }
-        } catch (SQLException e) {
-            response.sendRedirect("deposit.jsp?error=database_error");
-        } catch (ClassNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } finally {
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException e) {
-                    // Ignore
-                }
-            }
+        } else {
+            response.sendRedirect("deposit.jsp?error=account_not_found");
         }
     }
 }

@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
     pageEncoding="ISO-8859-1"%>
+   
     
 <!DOCTYPE html>
 <html>
@@ -113,7 +114,7 @@
 				<li><a href="passwordreset.jsp"><i class="fas fa-user-edit"></i> Change Password</a></li>
 				<li><a href="overdraft.jsp"><i class="fas fa-chart-line"></i> Overdraft Options</a></li>
 <li><a href="${pageContext.request.contextPath}/DeleteAccServlet?accno=${sessionScope.accountNumber}"><i class="fas fa-file-invoice-dollar"></i> Delete Account</a></li>
-<li><a href="userlogin.jsp"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+<li><a href="${pageContext.request.contextPath}/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
 			</ul>
 		</div>
 	</div>

@@ -57,7 +57,8 @@
                             </div>
                                <input type="hidden" name="accountNumber" value="<%= request.getParameter("username") %>" />
                             <div class="form-group form-button">
-                                <input type="submit" name="signin" id="signin" class="form-submit" value="Log in" />
+                                <input type="submit" name="signin" id="signin" class="form-submit" value="Log in" /> <br>
+                                <button formaction="/loginbank/login.jsp" class="form-submit">Admin Login</button>
                             </div>
                         </form>
                     </div>

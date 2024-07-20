@@ -1,17 +1,16 @@
 package com.loginbank.registration;
 
 import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import com.loginbank.registration.dao.updatedetailsdao;
 
 @WebServlet("/UpdateUserDetailsServlet")
 public class Updatedetails extends HttpServlet {
@@ -21,33 +20,17 @@ public class Updatedetails extends HttpServlet {
             throws ServletException, IOException {
         String accountNumber = request.getParameter("accountNumber");
 
+        updatedetailsdao updatedetailsDAO = new updatedetailsdao();
+        ResultSet rs = null;
+
         try {
-        	try {
-				Class.forName("com.mysql.cj.jdbc.Driver");
-			} catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/gen", "root", "system");
-            PreparedStatement pstmt = conn.prepareStatement("SELECT * FROM custdetails WHERE accno =?");
-            pstmt.setString(1, accountNumber);
+            rs = updatedetailsDAO.getUserDetails(accountNumber);
 
-            ResultSet rs = pstmt.executeQuery();
-
-            System.out.println("Query executed successfully");
-
-            if (rs.next()) {
-                System.out.println("ResultSet has data");
-
+            if (rs != null && rs.next()) {
                 String name = rs.getString("fullname");
                 String email = rs.getString("emailid");
                 String phone = rs.getString("mobileno");
                 String address = rs.getString("address");
-
-                System.out.println("Name: " + name);
-                System.out.println("Email: " + email);
-                System.out.println("Phone: " + phone);
-                System.out.println("Address: " + address);
 
                 request.setAttribute("fullname", name);
                 request.setAttribute("email", email);
@@ -57,7 +40,6 @@ public class Updatedetails extends HttpServlet {
 
                 request.getRequestDispatcher("updateUserDetailsForm.jsp").forward(request, response);
             } else {
-                System.out.println("No user found with account number " + accountNumber);
                 request.setAttribute("error", "No user found with account number " + accountNumber);
                 request.getRequestDispatcher("UpdateUser.jsp").forward(request, response);
             }
@@ -65,5 +47,13 @@ public class Updatedetails extends HttpServlet {
             System.out.println("Error: " + e.getMessage());
             request.setAttribute("error", "Error: " + e.getMessage());
             request.getRequestDispatcher("updateUserDetailsForm.jsp").forward(request, response);
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (SQLException e) {
+                // Handle exception
+            }
         }
     }}
